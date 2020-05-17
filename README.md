@@ -1,6 +1,8 @@
 # dpkg-s3
 
-[![Build Status](https://travis-ci.org/gamunu/dpkg-s3.svg?branch=master)](https://travis-ci.org/gamunu/dpkg-s3)
+<p align="left">
+  <a href="https://github.com/gamunu/dpkg-s3/actions"><img alt="test status" src="https://github.com/gamunu/dpkg-s3/workflows/build-test/badge.svg"></a>
+</p>
 
 `dpkg-s3` is a simple utility to make creating and managing APT repositories on
 S3.
