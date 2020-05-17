@@ -4,7 +4,7 @@ require "digest/sha2"
 require "digest/md5"
 require "socket"
 require "tmpdir"
-require "uri"
+require "cgi"
 
 require 'dpkg/s3/utils'
 
@@ -84,7 +84,7 @@ class Dpkg::S3::Package
 
         Dir.mktmpdir do |path|
           safesystem("#{extract_control_tarball_cmd} | tar -#{compression}xf - -C #{path}")
-          File.read(File.join(path, "control"))
+          File.read(File.join(path, "control"), :encoding => "UTF-8")
         end
       end
     end
@@ -146,7 +146,7 @@ class Dpkg::S3::Package
     @url_filename || "pool/#{codename}/#{self.name[0]}/#{self.name[0..1]}/#{s3_escape(File.basename(self.filename))}"
   end
 
-  def generate(codename)
+  def generate(codename = nil)
     template("package.erb").result(binding)
   end
 
@@ -253,7 +253,7 @@ class Dpkg::S3::Package
 
     # Packages manifest fields
     filename = fields.delete('Filename')
-    self.url_filename = filename && URI.unescape(filename)
+    self.url_filename = filename && CGI.unescape(filename)
     self.sha1 = fields.delete('SHA1')
     self.sha256 = fields.delete('SHA256')
     self.md5 = fields.delete('MD5sum')

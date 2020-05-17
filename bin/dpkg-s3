@@ -6,5 +6,8 @@ $:.unshift File.join(Pathname.new(__FILE__).realpath,'../../lib')
 require 'rubygems'
 require 'dpkg/s3/cli'
 
-Dpkg::S3::CLI.start
-
+begin
+  Dpkg::S3::CLI.start
+rescue
+  $stderr.puts "\n\tError during processing: #{$!.message}\n\n"
+end

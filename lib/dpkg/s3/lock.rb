@@ -2,6 +2,7 @@
 require "tempfile"
 require "socket"
 require "etc"
+require "securerandom"
 
 class Dpkg::S3::Lock
   attr_accessor :user
@@ -28,13 +29,17 @@ class Dpkg::S3::Lock
 
     def lock(codename, component = nil, architecture = nil, cache_control = nil)
       lockfile = Tempfile.new("lockfile")
-      lockfile.write("#{Etc.getlogin}@#{Socket.gethostname}")
+      lock_content = generate_lock_content
+      lockfile.write lock_content
       lockfile.close
 
       Dpkg::S3::Utils.s3_store(lockfile.path,
                               lock_path(codename, component, architecture, cache_control),
                               "text/plain",
                               cache_control)
+
+      return if lock_content == Dpkg::S3::Utils.s3_read(lock_path(codename, component, architecture, cache_control))
+      throw "Failed to acquire lock, was overwritten by another deb-s3 process"
     end
 
     def unlock(codename, component = nil, architecture = nil, cache_control = nil)
@@ -43,7 +48,7 @@ class Dpkg::S3::Lock
 
     def current(codename, component = nil, architecture = nil, cache_control = nil)
       lock_content = Dpkg::S3::Utils.s3_read(lock_path(codename, component, architecture, cache_control))
-      lock_content = lock_content.split('@')
+      lock_content = lock_content.split.first.split('@')
       lock = Dpkg::S3::Lock.new
       lock.user = lock_content[0]
       lock.host = lock_content[1] if lock_content.size > 1
@@ -53,6 +58,10 @@ class Dpkg::S3::Lock
     private
     def lock_path(codename, component = nil, architecture = nil, cache_control = nil)
       "dists/#{codename}/#{component}/binary-#{architecture}/lockfile"
+    end
+
+    def generate_lock_content
+      "#{Etc.getlogin}@#{Socket.gethostname}\n#{SecureRandom.hex}"
     end
   end
 end

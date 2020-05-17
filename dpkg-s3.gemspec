@@ -17,8 +17,8 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 1.9.3'
 
-  gem.add_dependency "thor",    "~> 0.19.0"
-  gem.add_dependency "aws-sdk", "~> 2"
-  gem.add_development_dependency "minitest", "~> 5"
-  gem.add_development_dependency "rake", "~> 11"
+  gem.add_dependency "thor",    "~> 1.0.1"
+  gem.add_dependency "aws-sdk-s3", "~> 1.64"
+  gem.add_development_dependency "minitest", "~> 5.8"
+  gem.add_development_dependency "rake", "~> 13"
 end

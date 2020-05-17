@@ -1,10 +1,6 @@
 # -*- encoding : utf-8 -*-
-require "aws-sdk"
+require "aws-sdk-s3"
 require "thor"
-
-# Hack: aws requires this!
-require "json"
-
 require "dpkg/s3"
 require "dpkg/s3/utils"
 require "dpkg/s3/manifest"
@@ -146,6 +142,10 @@ class Dpkg::S3::CLI < Thor
   :type     => :boolean,
   :desc     => "Whether to skip all package uploads." +
     "This is useful when hosting .deb files outside of the bucket."
+
+  def self.exit_on_failure?
+    true
+  end
 
   def upload(*files)
     if files.nil? || files.empty?

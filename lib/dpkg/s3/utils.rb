@@ -73,7 +73,7 @@ module Dpkg::S3::Utils
     false
   end
 
-  def s3_store(path, filename=nil, content_type='application/octet-stream; charset=binary', cache_control=nil, fail_if_exists=false)
+  def s3_store(path, filename=nil, content_type='application/x-debian-package', cache_control=nil, fail_if_exists=false)
     filename = File.basename(path) unless filename
     obj = s3_exists?(filename)
 
