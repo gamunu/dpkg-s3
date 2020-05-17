@@ -1,17 +1,17 @@
 $:.unshift File.expand_path("../lib", __FILE__)
-require "deb/s3"
+require "dpkg/s3"
 
 Gem::Specification.new do |gem|
-  gem.name        = "deb-s3"
-  gem.version     = Deb::S3::VERSION
+  gem.name        = "dpkg-s3"
+  gem.version     = Dpkg::S3::VERSION
 
-  gem.author      = "Ken Robertson"
-  gem.email       = "ken@invalidlogic.com"
-  gem.homepage    = "http://invalidlogic.com/"
+  gem.author      = "Gamunu Balagalla"
+  gem.email       = "gamunu.balagalla@outlook.com"
+  gem.homepage    = "https://github.com/gamunu/dpkg-s3"
   gem.summary     = "Easily create and manage an APT repository on S3."
   gem.description = gem.summary
   gem.license     = "MIT"
-  gem.executables = "deb-s3"
+  gem.executables = "dpkg-s3"
 
   gem.files = Dir["**/*"].select { |d| d =~ %r{^(README|bin/|ext/|lib/)} }
 

@@ -5,14 +5,14 @@ require "thor"
 # Hack: aws requires this!
 require "json"
 
-require "deb/s3"
-require "deb/s3/utils"
-require "deb/s3/manifest"
-require "deb/s3/package"
-require "deb/s3/release"
-require "deb/s3/lock"
+require "dpkg/s3"
+require "dpkg/s3/utils"
+require "dpkg/s3/manifest"
+require "dpkg/s3/package"
+require "dpkg/s3/release"
+require "dpkg/s3/lock"
 
-class Deb::S3::CLI < Thor
+class Dpkg::S3::CLI < Thor
   class_option :bucket,
   :type     => :string,
   :aliases  => "-b",
@@ -163,23 +163,23 @@ class Deb::S3::CLI < Thor
     begin
       if options[:lock]
         log("Checking for existing lock file")
-        if Deb::S3::Lock.locked?(options[:codename], component, options[:arch], options[:cache_control])
-          lock = Deb::S3::Lock.current(options[:codename], component, options[:arch], options[:cache_control])
+        if Dpkg::S3::Lock.locked?(options[:codename], component, options[:arch], options[:cache_control])
+          lock = Dpkg::S3::Lock.current(options[:codename], component, options[:arch], options[:cache_control])
           log("Repository is locked by another user: #{lock.user} at host #{lock.host}")
           log("Attempting to obtain a lock")
-          Deb::S3::Lock.wait_for_lock(options[:codename], component, options[:arch], options[:cache_control])
+          Dpkg::S3::Lock.wait_for_lock(options[:codename], component, options[:arch], options[:cache_control])
         end
         log("Locking repository for updates")
-        Deb::S3::Lock.lock(options[:codename], component, options[:arch], options[:cache_control])
+        Dpkg::S3::Lock.lock(options[:codename], component, options[:arch], options[:cache_control])
         @lock_acquired = true
       end
 
       # retrieve the existing manifests
       log("Retrieving existing manifests")
-      release  = Deb::S3::Release.retrieve(options[:codename], options[:origin], options[:suite], options[:cache_control])
+      release  = Dpkg::S3::Release.retrieve(options[:codename], options[:origin], options[:suite], options[:cache_control])
       manifests = {}
       release.architectures.each do |arch|
-        manifests[arch] = Deb::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
+        manifests[arch] = Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
       end
 
       packages_arch_all = []
@@ -187,7 +187,7 @@ class Deb::S3::CLI < Thor
       # examine all the files
       files.collect { |f| Dir.glob(f) }.flatten.each do |file|
         log("Examining package file #{File.basename(file)}")
-        pkg = Deb::S3::Package.parse_file(file)
+        pkg = Dpkg::S3::Package.parse_file(file)
 
         # copy over some options if they weren't given
         arch = options[:arch] || pkg.architecture
@@ -205,20 +205,24 @@ class Deb::S3::CLI < Thor
         # throw an error. This is mainly the case when initializing a brand new
         # repository. With "all", we won't know which architectures they're using.
         if arch == "all" && manifests.count == 0
-          error("Package #{File.basename(file)} had architecture \"all\", " +
-                "however noexisting package lists exist. This can often happen " +
-                "if the first package you are add to a new repository is an " +
-                "\"all\" architecture file. Please use --arch [i386|amd64|armhf] or " +
-                "another platform type to upload the file.")
+          manifests['amd64'] = Dpkg::S3::Manifest.retrieve(options[:codename], component,'amd64', options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
+          manifests['i386'] = Dpkg::S3::Manifest.retrieve(options[:codename], component,'i386', options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
+          manifests['armhf'] = Dpkg::S3::Manifest.retrieve(options[:codename], component,'armhf', options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
+
+         # error("Package #{File.basename(file)} had architecture \"all\", " +
+         #       "however noexisting package lists exist. This can often happen " +
+         #       "if the first package you are add to a new repository is an " +
+         #       "\"all\" architecture file. Please use --arch [i386|amd64|armhf] or " +
+         #       "another platform type to upload the file.")
         end
 
         # retrieve the manifest for the arch if we don't have it already
-        manifests[arch] ||= Deb::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
+        manifests[arch] ||= Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control], options[:fail_if_exists], options[:skip_package_upload])
 
         # add package in manifests
         begin
           manifests[arch].add(pkg, options[:preserve_versions])
-        rescue Deb::S3::Utils::AlreadyExistsError => e
+        rescue Dpkg::S3::Utils::AlreadyExistsError => e
           error("Preparing manifest failed because: #{e}")
         end
 
@@ -233,7 +237,7 @@ class Deb::S3::CLI < Thor
         packages_arch_all.each do |pkg|
           begin
             manifest.add(pkg, options[:preserve_versions], false)
-          rescue Deb::S3::Utils::AlreadyExistsError => e
+          rescue Dpkg::S3::Utils::AlreadyExistsError => e
             error("Preparing manifest failed because: #{e}")
           end
         end
@@ -244,7 +248,7 @@ class Deb::S3::CLI < Thor
       manifests.each_value do |manifest|
         begin
           manifest.write_to_s3 { |f| sublog("Transferring #{f}") }
-        rescue Deb::S3::Utils::AlreadyExistsError => e
+        rescue Dpkg::S3::Utils::AlreadyExistsError => e
           error("Uploading manifest failed because: #{e}")
         end
         release.update_manifest(manifest)
@@ -254,7 +258,7 @@ class Deb::S3::CLI < Thor
       log("Update complete.")
     ensure
       if options[:lock] && @lock_acquired
-        Deb::S3::Lock.unlock(options[:codename], component, options[:arch], options[:cache_control])
+        Dpkg::S3::Lock.unlock(options[:codename], component, options[:arch], options[:cache_control])
         log("Lock released.")
       end
     end
@@ -276,17 +280,17 @@ class Deb::S3::CLI < Thor
   def list
     configure_s3_client
 
-    release = Deb::S3::Release.retrieve(options[:codename])
+    release = Dpkg::S3::Release.retrieve(options[:codename])
     archs = release.architectures
     archs &= [options[:arch]] if options[:arch] && options[:arch] != "all"
     widths = [0, 0]
     rows = archs.map { |arch|
-      manifest = Deb::S3::Manifest.retrieve(options[:codename], component,
+      manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component,
                                             arch, options[:cache_control],
                                             false, false)
       manifest.packages.map do |package|
         if options[:long]
-          package.generate
+          package.generate(options[:codename])
         else
           [package.name, package.full_version, package.architecture].tap do |row|
             row.each_with_index do |col, i|
@@ -322,7 +326,7 @@ class Deb::S3::CLI < Thor
     configure_s3_client
 
     # retrieve the existing manifests
-    manifest = Deb::S3::Manifest.retrieve(options[:codename], component, arch,
+    manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component, arch,
                                           options[:cache_control], false, false)
     package = manifest.packages.detect { |p|
       p.name == package_name && p.full_version == version
@@ -331,7 +335,7 @@ class Deb::S3::CLI < Thor
       error "No such package found."
     end
 
-    puts package.generate
+    puts package.generate(options[:codename])
   end
 
   desc "copy PACKAGE TO_CODENAME TO_COMPONENT ",
@@ -394,12 +398,12 @@ class Deb::S3::CLI < Thor
 
     # retrieve the existing manifests
     log "Retrieving existing manifests"
-    from_manifest = Deb::S3::Manifest.retrieve(options[:codename],
+    from_manifest = Dpkg::S3::Manifest.retrieve(options[:codename],
                                                component, arch,
                                                options[:cache_control],
                                                false, options[:skip_package_upload])
-    to_release = Deb::S3::Release.retrieve(to_codename)
-    to_manifest = Deb::S3::Manifest.retrieve(to_codename, to_component, arch,
+    to_release = Dpkg::S3::Release.retrieve(to_codename)
+    to_manifest = Dpkg::S3::Manifest.retrieve(to_codename, to_component, arch,
                                              options[:cache_control],
                                              options[:fail_if_exists],
                                              options[:skip_package_upload])
@@ -414,14 +418,14 @@ class Deb::S3::CLI < Thor
     packages.each do |package|
       begin
         to_manifest.add package, options[:preserve_versions], false
-      rescue Deb::S3::Utils::AlreadyExistsError => e
+      rescue Dpkg::S3::Utils::AlreadyExistsError => e
         error("Preparing manifest failed because: #{e}")
       end
     end
 
     begin
       to_manifest.write_to_s3 { |f| sublog("Transferring #{f}") }
-    rescue Deb::S3::Utils::AlreadyExistsError => e
+    rescue Dpkg::S3::Utils::AlreadyExistsError => e
       error("Copying manifest failed because: #{e}")
     end
     to_release.update_manifest(to_manifest)
@@ -468,28 +472,47 @@ class Deb::S3::CLI < Thor
 
     # retrieve the existing manifests
     log("Retrieving existing manifests")
-    release  = Deb::S3::Release.retrieve(options[:codename], options[:origin], options[:suite])
-    manifest = Deb::S3::Manifest.retrieve(options[:codename], component, options[:arch], options[:cache_control], false, options[:skip_package_upload])
-
-    deleted = manifest.delete_package(package, versions)
-    if deleted.length == 0
-        if versions.nil?
-            error("No packages were deleted. #{package} not found.")
-        else
-            error("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found.")
-        end
+    release  = Dpkg::S3::Release.retrieve(options[:codename], options[:origin], options[:suite])
+    if arch == 'all'
+      selected_arch = release.architectures
     else
-        deleted.each { |p|
-            sublog("Deleting #{p.name} version #{p.full_version}")
-        }
+      selected_arch = [arch]
+    end
+    all_found = 0
+    selected_arch.each { |ar|
+      manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component, ar, options[:cache_control], false, options[:skip_package_upload])
+
+      deleted = manifest.delete_package(package, versions)
+      all_found += deleted.length
+      if deleted.length == 0
+          if versions.nil?
+              sublog("No packages were deleted. #{package} not found in arch #{ar}.")
+              next
+          else
+              sublog("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found in arch #{ar}.")
+              next
+          end
+      else
+          deleted.each { |p|
+              sublog("Deleting #{p.name} version #{p.full_version} from arch #{ar}")
+          }
+      end
+
+      log("Uploading new manifests to S3")
+      manifest.write_to_s3 {|f| sublog("Transferring #{f}") }
+      release.update_manifest(manifest)
+      release.write_to_s3 {|f| sublog("Transferring #{f}") }
+
+      log("Update complete.")
+    }
+    if all_found == 0
+      if versions.nil?
+        error("No packages were deleted. #{package} not found.")
+      else
+        error("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found.")
+      end
     end
 
-    log("Uploading new manifests to S3")
-    manifest.write_to_s3 {|f| sublog("Transferring #{f}") }
-    release.update_manifest(manifest)
-    release.write_to_s3 {|f| sublog("Transferring #{f}") }
-
-    log("Update complete.")
   end
 
 
@@ -505,19 +528,19 @@ class Deb::S3::CLI < Thor
     configure_s3_client
 
     log("Retrieving existing manifests")
-    release = Deb::S3::Release.retrieve(options[:codename], options[:origin], options[:suite])
+    release = Dpkg::S3::Release.retrieve(options[:codename], options[:origin], options[:suite])
 
     release.architectures.each do |arch|
       log("Checking for missing packages in: #{options[:codename]}/#{options[:component]} #{arch}")
-      manifest = Deb::S3::Manifest.retrieve(options[:codename], component,
+      manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component,
                                             arch, options[:cache_control], false,
                                             options[:skip_package_upload])
       missing_packages = []
 
       manifest.packages.each do |p|
-        unless Deb::S3::Utils.s3_exists? p.url_filename_encoded
+        unless Dpkg::S3::Utils.s3_exists? p.url_filename_encoded(options[:codename])
           sublog("The following packages are missing:\n\n") if missing_packages.empty?
-          puts(p.generate)
+          puts(p.generate(options[:codename]))
           puts("")
 
           missing_packages << p
@@ -593,15 +616,15 @@ class Deb::S3::CLI < Thor
     settings[:endpoint] = options[:endpoint] if options[:endpoint]
     settings.merge!(provider)
 
-    Deb::S3::Utils.s3          = Aws::S3::Client.new(settings)
-    Deb::S3::Utils.bucket      = options[:bucket]
-    Deb::S3::Utils.signing_key = options[:sign]
-    Deb::S3::Utils.gpg_options = options[:gpg_options]
-    Deb::S3::Utils.prefix      = options[:prefix]
-    Deb::S3::Utils.encryption  = options[:encryption]
+    Dpkg::S3::Utils.s3          = Aws::S3::Client.new(settings)
+    Dpkg::S3::Utils.bucket      = options[:bucket]
+    Dpkg::S3::Utils.signing_key = options[:sign]
+    Dpkg::S3::Utils.gpg_options = options[:gpg_options]
+    Dpkg::S3::Utils.prefix      = options[:prefix]
+    Dpkg::S3::Utils.encryption  = options[:encryption]
 
     # make sure we have a valid visibility setting
-    Deb::S3::Utils.access_policy =
+    Dpkg::S3::Utils.access_policy =
       case options[:visibility]
       when "public"
         "public-read"

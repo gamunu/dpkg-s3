@@ -1,8 +1,8 @@
 # -*- encoding : utf-8 -*-
 require "tempfile"
 
-class Deb::S3::Release
-  include Deb::S3::Utils
+class Dpkg::S3::Release
+  include Dpkg::S3::Utils
 
   attr_accessor :codename
   attr_accessor :origin
@@ -27,7 +27,7 @@ class Deb::S3::Release
 
   class << self
     def retrieve(codename, origin=nil, suite=nil, cache_control=nil)
-      if s = Deb::S3::Utils.s3_read("dists/#{codename}/Release")
+      if s = Dpkg::S3::Utils.s3_read("dists/#{codename}/Release")
         rel = self.parse_release(s)
       else
         rel = self.new
@@ -101,9 +101,9 @@ class Deb::S3::Release
     s3_store(release_tmp.path, self.filename, 'text/plain; charset=utf-8', self.cache_control)
 
     # sign the file, if necessary
-    if Deb::S3::Utils.signing_key
-      key_param = Deb::S3::Utils.signing_key != "" ? "--default-key=#{Deb::S3::Utils.signing_key}" : ""
-      if system("gpg -a #{key_param} --digest-algo SHA256 #{Deb::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}")
+    if Dpkg::S3::Utils.signing_key
+      key_param = Dpkg::S3::Utils.signing_key != "" ? "--default-key=#{Dpkg::S3::Utils.signing_key}" : ""
+      if system("gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}")
         local_file = release_tmp.path+".asc"
         remote_file = "dists/#{@codename}/InRelease"
         yield remote_file if block_given?
@@ -113,7 +113,7 @@ class Deb::S3::Release
       else
         raise "Signing the InRelease file failed."
       end
-      if system("gpg -a #{key_param} --digest-algo SHA256 #{Deb::S3::Utils.gpg_options} -b #{release_tmp.path}")
+      if system("gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -b #{release_tmp.path}")
         local_file = release_tmp.path+".asc"
         remote_file = self.filename+".gpg"
         yield remote_file if block_given?
@@ -143,7 +143,7 @@ class Deb::S3::Release
       %w(amd64 i386 armhf).each do |arch|
         next if self.files.has_key?("#{comp}/binary-#{arch}/Packages")
 
-        m = Deb::S3::Manifest.new
+        m = Dpkg::S3::Manifest.new
         m.codename = self.codename
         m.component = comp
         m.architecture = arch

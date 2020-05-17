@@ -1,13 +1,13 @@
 # -*- encoding : utf-8 -*-
 require File.expand_path('../../../spec_helper', __FILE__)
-require 'deb/s3/package'
+require 'dpkg/s3/package'
 
 EXPECTED_DESCRIPTION = "A platform for community discussion. Free, open, simple.\nThe description can have a continuation line.\n\nAnd blank lines.\n\nIf it wants to."
 
-describe Deb::S3::Package do
+describe Dpkg::S3::Package do
   describe ".parse_string" do
     it "creates a Package object with the right attributes" do
-      package = Deb::S3::Package.parse_string(File.read(fixture("Packages")))
+      package = Dpkg::S3::Package.parse_string(File.read(fixture("Packages")))
       package.version.must_equal("0.9.8.3")
       package.epoch.must_equal(nil)
       package.iteration.must_equal("1396474125.12e4179.wheezy")

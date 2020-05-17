@@ -1,13 +1,8 @@
-# deb-s3
+# dpkg-s3
 
-[![Build Status](https://travis-ci.org/krobertson/deb-s3.svg?branch=master)](https://travis-ci.org/krobertson/deb-s3)
+[![Build Status](https://travis-ci.org/gamunu/dpkg-s3.svg?branch=master)](https://travis-ci.org/gamunu/dpkg-s3)
 
-**This repository is no longer maintained.** I am no longer actively maintaining
-deb-s3. I haven't been using it to maintain any repositories since
-~2016. Someone had expressed interest in taking over development, but they
-appear to be inactive with it as well.
-
-`deb-s3` is a simple utility to make creating and managing APT repositories on
+`dpkg-s3` is a simple utility to make creating and managing APT repositories on
 S3.
 
 Most existing guides on using S3 to host an APT repository have you
@@ -21,7 +16,7 @@ my process is to use one-off virtual machines with
 [Vagrant](http://vagrantup.com), script out the build process, and then would
 prefer to just upload the final `.deb` from my Mac.
 
-With `deb-s3`, there is no need for this. `deb-s3` features:
+With `dpkg-s3`, there is no need for this. `dpkg-s3` features:
 
 * Downloads the existing package manifest and parses it.
 * Updates it with the new package, replacing the existing entry if already
@@ -35,22 +30,22 @@ With `deb-s3`, there is no need for this. `deb-s3` features:
 You can simply install it from rubygems:
 
 ```console
-$ gem install deb-s3
+$ gem install dpkg-s3
 ```
 
 Or to run the code directly, just check out the repo and run Bundler to ensure
 all dependencies are installed:
 
 ```console
-$ git clone https://github.com/krobertson/deb-s3.git
-$ cd deb-s3
+$ git clone https://github.com/gamunu/dpkg-s3.git
+$ cd dpkg-s3
 $ bundle install
 ```
 
 Now to upload a package, simply use:
 
 ```console
-$ deb-s3 upload --bucket my-bucket my-deb-package-1.0.0_amd64.deb
+$ dpkg-s3 upload --bucket my-bucket my-deb-package-1.0.0_amd64.deb
 >> Examining package file my-deb-package-1.0.0_amd64.deb
 >> Retrieving existing package manifest
 >> Uploading package and new manifests to S3
@@ -63,7 +58,7 @@ $ deb-s3 upload --bucket my-bucket my-deb-package-1.0.0_amd64.deb
 
 ```
 Usage:
-  deb-s3 upload FILES
+  dpkg-s3 upload FILES
 
 Options:
   -a, [--arch=ARCH]                                        # The architecture of the package in the APT repository.
@@ -102,7 +97,7 @@ packages in the specified component, codename and architecture.
 
 Now to delete the package:
 ```console
-$ deb-s3 delete my-deb-package --arch amd64 --bucket my-bucket --versions 1.0.0
+$ dpkg-s3 delete my-deb-package --arch amd64 --bucket my-bucket --versions 1.0.0
 >> Retrieving existing manifests
    -- Deleting my-deb-package version 1.0.0
 >> Uploading new manifests to S3
@@ -114,7 +109,7 @@ $ deb-s3 delete my-deb-package --arch amd64 --bucket my-bucket --versions 1.0.0
 
 ```
 Usage:
-  deb-s3 delete PACKAGE
+  dpkg-s3 delete PACKAGE
 
 Options:
   -a, [--arch=ARCH]                                  # The architecture of the package in the APT repository.
@@ -147,7 +142,7 @@ Remove the package named PACKAGE. If --versions is not specified, deleteall vers
 You can also verify an existing APT repository on S3 using the `verify` command:
 
 ```console
-deb-s3 verify -b my-bucket
+dpkg-s3 verify -b my-bucket
 >> Retrieving existing manifests
 >> Checking for missing packages in: stable/main i386
 >> Checking for missing packages in: stable/main amd64
@@ -156,7 +151,7 @@ deb-s3 verify -b my-bucket
 
 ```
 Usage:
-  deb-s3 verify
+  dpkg-s3 verify
 
 Options:
   -f, [--fix-manifests], [--no-fix-manifests]        # Whether to fix problems in manifests when verifying.

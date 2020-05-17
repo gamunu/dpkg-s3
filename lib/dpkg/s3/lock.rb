@@ -3,7 +3,7 @@ require "tempfile"
 require "socket"
 require "etc"
 
-class Deb::S3::Lock
+class Dpkg::S3::Lock
   attr_accessor :user
   attr_accessor :host
 
@@ -14,7 +14,7 @@ class Deb::S3::Lock
 
   class << self
     def locked?(codename, component = nil, architecture = nil, cache_control = nil)
-      Deb::S3::Utils.s3_exists?(lock_path(codename, component, architecture, cache_control))
+      Dpkg::S3::Utils.s3_exists?(lock_path(codename, component, architecture, cache_control))
     end
 
     def wait_for_lock(codename, component = nil, architecture = nil, cache_control = nil, max_attempts=60, wait=10)
@@ -31,20 +31,20 @@ class Deb::S3::Lock
       lockfile.write("#{Etc.getlogin}@#{Socket.gethostname}")
       lockfile.close
 
-      Deb::S3::Utils.s3_store(lockfile.path,
+      Dpkg::S3::Utils.s3_store(lockfile.path,
                               lock_path(codename, component, architecture, cache_control),
                               "text/plain",
                               cache_control)
     end
 
     def unlock(codename, component = nil, architecture = nil, cache_control = nil)
-      Deb::S3::Utils.s3_remove(lock_path(codename, component, architecture, cache_control))
+      Dpkg::S3::Utils.s3_remove(lock_path(codename, component, architecture, cache_control))
     end
 
     def current(codename, component = nil, architecture = nil, cache_control = nil)
-      lock_content = Deb::S3::Utils.s3_read(lock_path(codename, component, architecture, cache_control))
+      lock_content = Dpkg::S3::Utils.s3_read(lock_path(codename, component, architecture, cache_control))
       lock_content = lock_content.split('@')
-      lock = Deb::S3::Lock.new
+      lock = Dpkg::S3::Lock.new
       lock.user = lock_content[0]
       lock.host = lock_content[1] if lock_content.size > 1
       lock

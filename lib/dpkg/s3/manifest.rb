@@ -1,11 +1,11 @@
 # -*- encoding : utf-8 -*-
 require "tempfile"
 require "zlib"
-require 'deb/s3/utils'
-require 'deb/s3/package'
+require 'dpkg/s3/utils'
+require 'dpkg/s3/package'
 
-class Deb::S3::Manifest
-  include Deb::S3::Utils
+class Dpkg::S3::Manifest
+  include Dpkg::S3::Utils
 
   attr_accessor :codename
   attr_accessor :component
@@ -32,7 +32,7 @@ class Deb::S3::Manifest
 
   class << self
     def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_package_upload=false)
-      m = if s = Deb::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages")
+      m = if s = Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages")
         self.parse_packages(s)
       else
         self.new
@@ -51,7 +51,7 @@ class Deb::S3::Manifest
       m = self.new
       str.split("\n\n").each do |s|
         next if s.chomp.empty?
-        m.packages << Deb::S3::Package.parse_string(s)
+        m.packages << Dpkg::S3::Package.parse_string(s)
       end
       m
     end

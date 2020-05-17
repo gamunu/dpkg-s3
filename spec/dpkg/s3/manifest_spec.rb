@@ -1,10 +1,10 @@
 # -*- encoding : utf-8 -*-
 require File.expand_path('../../../spec_helper', __FILE__)
-require 'deb/s3/manifest'
+require 'dpkg/s3/manifest'
 
-describe Deb::S3::Manifest do
+describe Dpkg::S3::Manifest do
   before do
-    @manifest = Deb::S3::Manifest.new
+    @manifest = Dpkg::S3::Manifest.new
   end
 
   describe "#add" do

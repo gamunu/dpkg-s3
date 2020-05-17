@@ -4,7 +4,7 @@ require "digest/md5"
 require "erb"
 require "tmpdir"
 
-module Deb::S3::Utils
+module Dpkg::S3::Utils
   module_function
   def s3; @s3 end
   def s3= v; @s3 = v end
@@ -45,7 +45,7 @@ module Deb::S3::Utils
   end
 
   def s3_path(path)
-    File.join(*[Deb::S3::Utils.prefix, path].compact)
+    File.join(*[Dpkg::S3::Utils.prefix, path].compact)
   end
 
   # from fog, Fog::AWS.escape
@@ -56,8 +56,8 @@ module Deb::S3::Utils
   end
 
   def s3_exists?(path)
-    Deb::S3::Utils.s3.head_object(
-      :bucket => Deb::S3::Utils.bucket,
+    Dpkg::S3::Utils.s3.head_object(
+      :bucket => Dpkg::S3::Utils.bucket,
       :key => s3_path(path),
     )
   rescue Aws::S3::Errors::NotFound
@@ -65,8 +65,8 @@ module Deb::S3::Utils
   end
 
   def s3_read(path)
-    Deb::S3::Utils.s3.get_object(
-      :bucket => Deb::S3::Utils.bucket,
+    Dpkg::S3::Utils.s3.get_object(
+      :bucket => Dpkg::S3::Utils.bucket,
       :key => s3_path(path),
     )[:body].read
   rescue Aws::S3::Errors::NoSuchKey
@@ -86,9 +86,9 @@ module Deb::S3::Utils
     end
 
     options = {
-      :bucket => Deb::S3::Utils.bucket,
+      :bucket => Dpkg::S3::Utils.bucket,
       :key => s3_path(filename),
-      :acl => Deb::S3::Utils.access_policy,
+      :acl => Dpkg::S3::Utils.access_policy,
       :content_type => content_type,
       :metadata => { "md5" => file_md5.to_s },
     }
@@ -97,19 +97,19 @@ module Deb::S3::Utils
     end
 
     # specify if encryption is required
-    options[:server_side_encryption] = "AES256" if Deb::S3::Utils.encryption
+    options[:server_side_encryption] = "AES256" if Dpkg::S3::Utils.encryption
 
     # upload the file
     File.open(path) do |f|
       options[:body] = f
-      Deb::S3::Utils.s3.put_object(options)
+      Dpkg::S3::Utils.s3.put_object(options)
     end
   end
 
   def s3_remove(path)
     if s3_exists?(path)
-      Deb::S3::Utils.s3.delete_object(
-        :bucket =>Deb::S3::Utils.bucket,
+      Dpkg::S3::Utils.s3.delete_object(
+        :bucket =>Dpkg::S3::Utils.bucket,
         :key => s3_path(path),
       )
     end
