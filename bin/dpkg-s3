@@ -1,13 +1,14 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'pathname'
-$:.unshift File.join(Pathname.new(__FILE__).realpath,'../../lib')
+$LOAD_PATH.unshift File.join(Pathname.new(__FILE__).realpath, '../../lib')
 
 require 'rubygems'
 require 'dpkg/s3/cli'
 
 begin
   Dpkg::S3::CLI.start
-rescue
-  $stderr.puts "\n\tError during processing: #{$!.message}\n\n"
+rescue StandardError
+  warn "\n\tError during processing: #{$ERROR_INFO.message}\n\n"
 end
