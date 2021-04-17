@@ -21,4 +21,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency "aws-sdk-s3", "~> 1.93"
   gem.add_development_dependency "minitest", "~> 5.14"
   gem.add_development_dependency "rake", "~> 13"
+  gem.add_development_dependency "rubocop-minitest", "~> 0.11.1"
+  gem.add_development_dependency "rubocop-rake", "~> 0.5.1"
 end

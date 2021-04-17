@@ -32,7 +32,7 @@ class Dpkg::S3::Manifest
 
   class << self
     def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_package_upload=false)
-      m = if s = Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages")
+      m = if s =      Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages")
         self.parse_packages(s)
       else
         self.new
