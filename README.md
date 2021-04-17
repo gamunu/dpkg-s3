@@ -1,7 +1,7 @@
 # dpkg-s3
 
 <p align="left">
-  <a href="https://github.com/gamunu/dpkg-s3/actions"><img alt="test status" src="https://github.com/gamunu/dpkg-s3/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/gamunu/dpkg-s3/actions"><img alt="test status" src="https://github.com/gamunu/dpkg-s3/workflows/Ruby/badge.svg"></a>
 </p>
 
 `dpkg-s3` is a simple utility to make creating and managing APT repositories on
