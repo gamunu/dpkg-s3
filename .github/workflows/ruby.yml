@@ -1,14 +1,13 @@
-name: Ruby
+name: ruby
 on:
   workflow_dispatch:
   push:
     branches: [ $default-branch ]
     paths-ignore:
       - '**.md'
-  pull_request:
-    branches: [ $default-branch ]
-    paths-ignore:
-      - '**.md'
+      - '.gitignore'
+      - '.rubocop.yml'
+      - 'LICENSE'
 
 jobs:
   test:
@@ -25,9 +24,9 @@ jobs:
       with:
         ruby-version: ${{ matrix.version }}
     - run: bundle install
-    - name: Rubocop
-      run: rubocop
     - run: bundle exec rake
+    - name: rubocop
+      run: bundle exec rake rubocop
   
   build:
     name: Build + Publish

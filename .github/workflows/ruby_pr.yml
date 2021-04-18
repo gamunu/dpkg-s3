@@ -1,0 +1,31 @@
+name: ruby pr
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        version: [2.5, 2.6, 2.7, head]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: use-ruby ${{ matrix.version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.version }}
+    - run: bundle install
+    - run: bundle exec rake
+    - name: rubocop
+      run: bundle exec rake rubocop
