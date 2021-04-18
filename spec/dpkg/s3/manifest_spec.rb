@@ -16,7 +16,8 @@ describe Dpkg::S3::Manifest do
       new_package = create_package name: 'discourse', epoch: epoch, version: '0.9.8.3', iteration: '1'
 
       @manifest.stub :packages, [existing_package_with_same_full_version] do
-        @manifest.add(new_package, preserve_versions = true)
+        preserve_versions = true
+        @manifest.add(new_package, preserve_versions)
         _(@manifest.packages.length).must_equal 1
       end
     end
@@ -26,7 +27,8 @@ describe Dpkg::S3::Manifest do
       new_package = create_package name: 'discourse', version: '0.9.8.3', iteration: '2'
 
       @manifest.stub :packages, [existing_package_with_same_version] do
-        @manifest.add(new_package, preserve_versions = true)
+        preserve_versions = true
+        @manifest.add(new_package, preserve_versions)
         _(@manifest.packages.length).must_equal 2
       end
     end
@@ -40,7 +42,8 @@ describe Dpkg::S3::Manifest do
       new_package = create_package name: 'discourse', version: '0.9.8.5'
 
       @manifest.stub :packages, existing_packages_with_same_name do
-        @manifest.add(new_package, preserve_versions = false)
+        preserve_versions = false
+        @manifest.add(new_package, preserve_versions)
         _(@manifest.packages).must_equal [new_package]
       end
     end

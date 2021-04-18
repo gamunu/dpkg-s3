@@ -11,6 +11,7 @@ require 'dpkg/s3/lock'
 
 module Dpkg
   module S3
+    # CLI interface for dpkg-s3
     class CLI < Thor
       class_option :bucket,
                    type: :string,
@@ -154,7 +155,7 @@ module Dpkg
         error('You must specify at least one file to upload') if files.nil? || files.empty?
 
         # make sure all the files exists
-        if missing_file = files.find { |pattern| Dir.glob(pattern).empty? }
+        if (missing_file = files.find { |pattern| Dir.glob(pattern).empty? })
           error("File '#{missing_file}' doesn't exist")
         end
 
@@ -182,8 +183,8 @@ module Dpkg
           manifests = {}
           release.architectures.each do |arch|
             manifests[arch] =
-              Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control], options[:fail_if_exists],
-                                          options[:skip_package_upload])
+              Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control],
+                                          options[:fail_if_exists], options[:skip_package_upload])
           end
 
           packages_arch_all = []
@@ -198,7 +199,8 @@ module Dpkg
 
             # If they've specified an arch type that doesn't match the package let them know
             if options.key?('arch') && options[:arch] != pkg.architecture
-              warn("You specified architecture #{options[:arch]} but package #{pkg.name} has architecture type of #{pkg.architecture}")
+              warn("You specified architecture #{options[:arch]} but package #{pkg.name} has architecture
+               type of #{pkg.architecture}")
             end
 
             # validate we have them
@@ -212,14 +214,14 @@ module Dpkg
             # repository. With "all", we won't know which architectures they're using.
             if arch == 'all' && manifests.count.zero?
               manifests['amd64'] =
-                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'amd64', options[:cache_control], options[:fail_if_exists],
-                                            options[:skip_package_upload])
+                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'amd64', options[:cache_control],
+                                            options[:fail_if_exists], options[:skip_package_upload])
               manifests['i386'] =
-                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'i386', options[:cache_control], options[:fail_if_exists],
-                                            options[:skip_package_upload])
+                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'i386', options[:cache_control],
+                                            options[:fail_if_exists], options[:skip_package_upload])
               manifests['armhf'] =
-                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'armhf', options[:cache_control], options[:fail_if_exists],
-                                            options[:skip_package_upload])
+                Dpkg::S3::Manifest.retrieve(options[:codename], component, 'armhf', options[:cache_control],
+                                            options[:fail_if_exists], options[:skip_package_upload])
 
               # error("Package #{File.basename(file)} had architecture \"all\", " +
               #       "however noexisting package lists exist. This can often happen " +
@@ -229,8 +231,9 @@ module Dpkg
             end
 
             # retrieve the manifest for the arch if we don't have it already
-            manifests[arch] ||= Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control],
-                                                            options[:fail_if_exists], options[:skip_package_upload])
+            manifests[arch] ||= Dpkg::S3::Manifest.retrieve(options[:codename], component, arch,
+                                                            options[:cache_control], options[:fail_if_exists],
+                                                            options[:skip_package_upload])
 
             # add package in manifests
             begin
@@ -317,7 +320,7 @@ module Dpkg
           $stdout.puts rows.join("\n")
         else
           rows.each do |row|
-            $stdout.puts "% -#{widths[0]}s  % -#{widths[1]}s  %s" % row
+            $stdout.puts format("% -#{widths[0]}s  % -#{widths[1]}s  %<row>", row)
           end
         end
       end
@@ -343,7 +346,9 @@ module Dpkg
       end
 
       desc 'copy PACKAGE TO_CODENAME TO_COMPONENT ',
-           'Copy the package named PACKAGE to given codename and component. If --versions is not specified, copy all versions of PACKAGE. Otherwise, only the specified versions will be copied. Source codename and component is given by --codename and --component options.'
+           'Copy the package named PACKAGE to given codename and component. If --versions is not specified, '\
+           'copy all versions of PACKAGE. Otherwise, only the specified versions will be copied. '\
+           'Source codename and component is given by --codename and --component options.'
 
       option :cache_control,
              type: :string,
@@ -478,11 +483,11 @@ module Dpkg
           if deleted.length.zero?
             if versions.nil?
               sublog("No packages were deleted. #{package} not found in arch #{ar}.")
-              next
             else
-              sublog("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found in arch #{ar}.")
-              next
+              sublog("No packages were deleted. #{package} versions #{versions.join(', ')}
+               could not be found in arch #{ar}.")
             end
+            next
           else
             deleted.each do |p|
               sublog("Deleting #{p.name} version #{p.full_version} from arch #{ar}")
@@ -496,12 +501,12 @@ module Dpkg
 
           log('Update complete.')
         end
-        if all_found.zero?
-          if versions.nil?
-            error("No packages were deleted. #{package} not found.")
-          else
-            error("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found.")
-          end
+        return unless all_found.zero?
+
+        if versions.nil?
+          error("No packages were deleted. #{package} not found.")
+        else
+          error("No packages were deleted. #{package} versions #{versions.join(', ')} could not be found.")
         end
       end
 

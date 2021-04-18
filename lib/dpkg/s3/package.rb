@@ -9,8 +9,12 @@ require 'cgi'
 
 require 'dpkg/s3/utils'
 
+# Dpkg is the root module for all storage modules including S3
 module Dpkg
+  # S3 storage module resposible of handling packages on S3 including upload, delete
   module S3
+    # Package class inlcudes methods for extracting the control file of a debian archive and extracting
+    # information required for publishing package
     class Package
       include Dpkg::S3::Utils
 
@@ -20,9 +24,6 @@ module Dpkg
       # Any other attributes specific to this package.
       # This is where you'd put rpm, deb, or other specific attributes.
       attr_accessor :attributes
-
-      # hashes
-      attr_accessor :url_filename
 
       class << self
         include Dpkg::S3::Utils
@@ -35,9 +36,9 @@ module Dpkg
           p
         end
 
-        def parse_string(s)
+        def parse_string(str)
           p = new
-          p.extract_info(s)
+          p.extract_info(str)
           p
         end
 
@@ -50,7 +51,7 @@ module Dpkg
             control_file = package_files.split("\n").select do |file|
               file.start_with?('control.')
             end.first
-            compression = if control_file === 'control.tar.gz'
+            compression = if control_file == 'control.tar.gz'
                             'z'
                           else
                             'J'
@@ -118,11 +119,6 @@ module Dpkg
         return nil if [epoch, version, iteration].all?(&:nil?)
 
         [[epoch, version].compact.join(':'), iteration].compact.join('-')
-      end
-
-      def filename=(f)
-        @filename = f
-        @filename
       end
 
       def url_filename(codename)

@@ -5,8 +5,12 @@ require 'zlib'
 require 'dpkg/s3/utils'
 require 'dpkg/s3/package'
 
+# Dpkg is the root module for all storage modules including S3
 module Dpkg
+  # S3 storage module resposible of handling packages on S3 including upload, delete
   module S3
+    # Manifest is resposible of creating/retrieving and rebuilding the debian Package manifest with
+    # standard information required when publishing the packages to a S3 debian repository
     class Manifest
       include Dpkg::S3::Utils
 
@@ -26,8 +30,8 @@ module Dpkg
       end
 
       class << self
-        def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_package_upload = false)
-          m = if s = Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages")
+        def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_package_upload: false)
+          m = if (s = Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages"))
                 parse_packages(s)
               else
                 new
@@ -53,7 +57,7 @@ module Dpkg
         end
       end
 
-      def add(pkg, preserve_versions, needs_uploading = true)
+      def add(pkg, preserve_versions, needs_uploading: true)
         if fail_if_exists
           packages.each do |p|
             next unless p.name == pkg.name && \
@@ -77,13 +81,13 @@ module Dpkg
       end
 
       def delete_package(pkg, versions = nil)
-        deleted = []
         new_packages = @packages.select do |p|
           # Include packages we didn't name
           if p.name != pkg
             p
           # Also include the packages not matching a specified version
-          elsif !versions.nil? && (p.name == pkg) && !versions.include?(p.version) && !versions.include?("#{p.version}-#{p.iteration}") && !versions.include?(p.full_version)
+          elsif !versions.nil? && (p.name == pkg) && !versions.include?(p.version) &&
+                !versions.include?("#{p.version}-#{p.iteration}") && !versions.include?(p.full_version)
             p
           end
         end

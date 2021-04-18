@@ -4,6 +4,8 @@ require 'tempfile'
 
 module Dpkg
   module S3
+    # Release is resposible of creating/retrieving and rebuilding the debian Release manifest with
+    # standard information required when publishing the package to a debian repository
     class Release
       include Dpkg::S3::Utils
 
@@ -22,7 +24,7 @@ module Dpkg
 
       class << self
         def retrieve(codename, origin = nil, suite = nil, cache_control = nil)
-          rel = if s = Dpkg::S3::Utils.s3_read("dists/#{codename}/Release")
+          rel = if (s = Dpkg::S3::Utils.s3_read("dists/#{codename}/Release"))
                   parse_release(s)
                 else
                   new
@@ -48,11 +50,9 @@ module Dpkg
       def parse(str)
         parse = lambda do |field|
           value = str[/^#{field}: .*/]
-          if value.nil?
-            return nil
-          else
-            return value.split(': ', 2).last
-          end
+          return nil if value.nil?
+
+          return value.split(': ', 2).last
         end
 
         # grab basic fields
@@ -98,7 +98,9 @@ module Dpkg
         # sign the file, if necessary
         if Dpkg::S3::Utils.signing_key
           key_param = Dpkg::S3::Utils.signing_key != '' ? "--default-key=#{Dpkg::S3::Utils.signing_key}" : ''
-          if system("gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}")
+          gpg_clear = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}" # rubocop:disable Layout/LineLength
+          gpg_sign = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -b #{release_tmp.path}"
+          if system(gpg_clear) # rubocop:disable Style/GuardClause
             local_file = "#{release_tmp.path}.asc"
             remote_file = "dists/#{@codename}/InRelease"
             yield remote_file if block_given?
@@ -109,7 +111,7 @@ module Dpkg
           else
             raise 'Signing the InRelease file failed.'
           end
-          if system("gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -b #{release_tmp.path}")
+          if system(gpg_sign) # rubocop:disable Style/GuardClause
             local_file = "#{release_tmp.path}.asc"
             remote_file = "#{filename}.gpg"
             yield remote_file if block_given?

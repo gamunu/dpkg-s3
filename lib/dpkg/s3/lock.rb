@@ -5,8 +5,12 @@ require 'socket'
 require 'etc'
 require 'securerandom'
 
+# Dpkg is the root module for all storage modules including S3
 module Dpkg
+  # S3 storage module resposible of handling packages on S3 including upload, delete
   module S3
+    # Lock is resposible of creating lock file on S3 to ensure when multiple instances of uploads will
+    # not conflict with each other
     class Lock
       attr_accessor :user, :host
 
@@ -20,7 +24,8 @@ module Dpkg
           Dpkg::S3::Utils.s3_exists?(lock_path(codename, component, architecture, cache_control))
         end
 
-        def wait_for_lock(codename, component = nil, architecture = nil, cache_control = nil, max_attempts = 60, wait = 10)
+        def wait_for_lock(codename, component = nil, architecture = nil, cache_control = nil,
+                          max_attempts = 60, wait = 10)
           attempts = 0
           while locked?(codename, component, architecture, cache_control)
             attempts += 1

@@ -5,66 +5,15 @@ require 'digest/md5'
 require 'erb'
 require 'tmpdir'
 
+# Dpkg is the root module for all storage modules including S3
 module Dpkg
+  # S3 storage module resposible of handling packages on S3 including upload, delete
   module S3
+    # Utils contains functions will be used in Package and Release modules
     module Utils
       module_function
 
-      def s3
-        @s3
-      end
-
-      def s3=(v)
-        @s3 = v
-      end
-
-      def bucket
-        @bucket
-      end
-
-      def bucket=(v)
-        @bucket = v
-      end
-
-      def access_policy
-        @access_policy
-      end
-
-      def access_policy=(v)
-        @access_policy = v
-      end
-
-      def signing_key
-        @signing_key
-      end
-
-      def signing_key=(v)
-        @signing_key = v
-      end
-
-      def gpg_options
-        @gpg_options
-      end
-
-      def gpg_options=(v)
-        @gpg_options = v
-      end
-
-      def prefix
-        @prefix
-      end
-
-      def prefix=(v)
-        @prefix = v
-      end
-
-      def encryption
-        @encryption
-      end
-
-      def encryption=(v)
-        @encryption = v
-      end
+      attr_accessor :s3, :bucket, :access_policy, :signing_key, :gpg_options, :prefix, :encryption
 
       class SafeSystemError < RuntimeError; end
 
@@ -80,10 +29,10 @@ module Dpkg
         success
       end
 
-      def debianize_op(op)
+      def debianize_op(operator)
         # Operators in debian packaging are <<, <=, =, >= and >>
         # So any operator like < or > must be replaced
-        { :< => '<<', :> => '>>' }[op.to_sym] or op
+        { :< => '<<', :> => '>>' }[operator.to_sym] or operator
       end
 
       def template(path)
@@ -121,7 +70,8 @@ module Dpkg
         false
       end
 
-      def s3_store(path, filename = nil, content_type = 'application/x-debian-package', cache_control = nil, fail_if_exists = false)
+      def s3_store(path, filename = nil, content_type = 'application/x-debian-package',
+                   cache_control = nil, fail_if_exists: false)
         filename ||= File.basename(path)
         obj = s3_exists?(filename)
 
@@ -153,12 +103,12 @@ module Dpkg
       end
 
       def s3_remove(path)
-        if s3_exists?(path)
-          Dpkg::S3::Utils.s3.delete_object(
-            bucket: Dpkg::S3::Utils.bucket,
-            key: s3_path(path)
-          )
-        end
+        return unless s3_exists?(path)
+
+        Dpkg::S3::Utils.s3.delete_object(
+          bucket: Dpkg::S3::Utils.bucket,
+          key: s3_path(path)
+        )
       end
     end
   end

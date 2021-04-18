@@ -3,7 +3,9 @@
 require File.expand_path('../../spec_helper', __dir__)
 require 'dpkg/s3/package'
 
-EXPECTED_DESCRIPTION = "A platform for community discussion. Free, open, simple.\nThe description can have a continuation line.\n\nAnd blank lines.\n\nIf it wants to."
+EXPECTED_DESCRIPTION = 'A platform for community discussion. Free, open, simple.'\
+"\nThe description can have a continuation line.\n\nAnd blank lines."\
+"\n\nIf it wants to."
 
 describe Dpkg::S3::Package do
   describe '.parse_string' do
