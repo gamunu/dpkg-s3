@@ -254,9 +254,9 @@ module Dpkg
         attributes[:deb_provides]  = fields.delete('Provides')
         attributes[:deb_replaces]  = fields.delete('Replaces')
 
-        attributes[:deb_field] = Hash[fields.map do |k, v|
+        attributes[:deb_field] = fields.map do |k, v|
           [k.sub(/\AX[BCS]{0,3}-/, ''), v]
-        end]
+        end.to_h
       end
 
       def apply_file_info(file)

@@ -97,7 +97,7 @@ module Dpkg
 
         # sign the file, if necessary
         if Dpkg::S3::Utils.signing_key
-          key_param = Dpkg::S3::Utils.signing_key != '' ? "--default-key=#{Dpkg::S3::Utils.signing_key}" : ''
+          key_param = Dpkg::S3::Utils.signing_key == '' ? '' : "--default-key=#{Dpkg::S3::Utils.signing_key}"
           gpg_clear = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}" # rubocop:disable Layout/LineLength
           gpg_sign = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -b #{release_tmp.path}"
           raise 'Signing the InRelease file failed.' unless system(gpg_clear)

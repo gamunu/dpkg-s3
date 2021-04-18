@@ -83,11 +83,9 @@ module Dpkg
       def delete_package(pkg, versions = nil)
         new_packages = @packages.select do |p|
           # Include packages we didn't name
-          if p.name != pkg
-            p
           # Also include the packages not matching a specified version
-          elsif !versions.nil? && (p.name == pkg) && !versions.include?(p.version) &&
-                !versions.include?("#{p.version}-#{p.iteration}") && !versions.include?(p.full_version)
+          if p.name != pkg || (!versions.nil? && (p.name == pkg) && !versions.include?(p.version) &&
+                !versions.include?("#{p.version}-#{p.iteration}") && !versions.include?(p.full_version))
             p
           end
         end

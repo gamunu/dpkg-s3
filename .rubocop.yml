@@ -2,6 +2,9 @@ require:
   - rubocop-rake
   - rubocop-minitest
 
+AllCops:
+    NewCops: enable
+
 Style/ModuleFunction:
   EnforcedStyle: extend_self
 Metrics/BlockLength:
