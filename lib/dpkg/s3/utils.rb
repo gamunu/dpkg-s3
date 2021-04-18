@@ -11,7 +11,7 @@ module Dpkg
   module S3
     # Utils contains functions will be used in Package and Release modules
     module Utils
-      module_function
+      extend self
 
       attr_accessor :s3, :bucket, :access_policy, :signing_key, :gpg_options, :prefix, :encryption
 

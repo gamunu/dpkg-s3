@@ -7,8 +7,22 @@ $LOAD_PATH.unshift File.join(Pathname.new(__FILE__).realpath, '../../lib')
 require 'rubygems'
 require 'dpkg/s3/cli'
 
+# String monkey patch class to add red and gray colors
+class String
+  def red
+    "\e[31m#{self}\e[0m"
+  end
+
+  def gray
+    "\e[37m#{self}\e[0m"
+  end
+end
+
 begin
   Dpkg::S3::CLI.start
-rescue StandardError
-  warn "\n\tError during processing: #{$ERROR_INFO.message}\n\n"
+rescue StandardError => e
+  warn "\n\tError during processing: #{e.message}\n\n".red
+  warn "\n\tDebug: #{e.backtrace}\n\n".gray
+rescue Interrupt
+  warn "\nOperation canceled. Please verify repository for broken packages".red
 end

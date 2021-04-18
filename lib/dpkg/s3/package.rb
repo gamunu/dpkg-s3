@@ -3,6 +3,7 @@
 require 'digest/sha1'
 require 'digest/sha2'
 require 'digest/md5'
+require 'English'
 require 'socket'
 require 'tmpdir'
 require 'cgi'
@@ -19,7 +20,7 @@ module Dpkg
       include Dpkg::S3::Utils
 
       attr_accessor :name, :version, :epoch, :iteration, :maintainer, :vendor, :url, :category, :license, :architecture,
-                    :description, :dependencies, :sha1, :sha256, :md5, :size, :filename
+                    :description, :dependencies, :sha1, :sha256, :md5, :size, :filename, :url_filename
 
       # Any other attributes specific to this package.
       # This is where you'd put rpm, deb, or other specific attributes.
@@ -121,7 +122,7 @@ module Dpkg
         [[epoch, version].compact.join(':'), iteration].compact.join('-')
       end
 
-      def url_filename(codename)
+      def url_filename(codename) # rubocop:disable Lint/DuplicateMethods
         @url_filename || "pool/#{codename}/#{name[0]}/#{name[0..1]}/#{File.basename(filename)}"
       end
 
@@ -232,7 +233,7 @@ module Dpkg
 
         # Packages manifest fields
         filename = fields.delete('Filename')
-        self.url_filename = filename && CGI.unescape(filename)
+        self.url_filename = filename
         self.sha1 = fields.delete('SHA1')
         self.sha256 = fields.delete('SHA256')
         self.md5 = fields.delete('MD5sum')

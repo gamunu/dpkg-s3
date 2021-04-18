@@ -184,7 +184,7 @@ module Dpkg
           release.architectures.each do |arch|
             manifests[arch] =
               Dpkg::S3::Manifest.retrieve(options[:codename], component, arch, options[:cache_control],
-                                          options[:fail_if_exists], options[:skip_package_upload])
+                                          options[:fail_if_exists], skip_upload: options[:skip_package_upload])
           end
 
           packages_arch_all = []
@@ -215,13 +215,13 @@ module Dpkg
             if arch == 'all' && manifests.count.zero?
               manifests['amd64'] =
                 Dpkg::S3::Manifest.retrieve(options[:codename], component, 'amd64', options[:cache_control],
-                                            options[:fail_if_exists], options[:skip_package_upload])
+                                            options[:fail_if_exists], skip_upload: options[:skip_package_upload])
               manifests['i386'] =
                 Dpkg::S3::Manifest.retrieve(options[:codename], component, 'i386', options[:cache_control],
-                                            options[:fail_if_exists], options[:skip_package_upload])
+                                            options[:fail_if_exists], skip_upload: options[:skip_package_upload])
               manifests['armhf'] =
                 Dpkg::S3::Manifest.retrieve(options[:codename], component, 'armhf', options[:cache_control],
-                                            options[:fail_if_exists], options[:skip_package_upload])
+                                            options[:fail_if_exists], skip_upload: options[:skip_package_upload])
 
               # error("Package #{File.basename(file)} had architecture \"all\", " +
               #       "however noexisting package lists exist. This can often happen " +
@@ -233,7 +233,7 @@ module Dpkg
             # retrieve the manifest for the arch if we don't have it already
             manifests[arch] ||= Dpkg::S3::Manifest.retrieve(options[:codename], component, arch,
                                                             options[:cache_control], options[:fail_if_exists],
-                                                            options[:skip_package_upload])
+                                                            skip_upload: options[:skip_package_upload])
 
             # add package in manifests
             begin
@@ -251,7 +251,7 @@ module Dpkg
 
             packages_arch_all.each do |pkg|
               begin
-                manifest.add(pkg, options[:preserve_versions], false)
+                manifest.add(pkg, options[:preserve_versions], needs_uploading: false)
               rescue Dpkg::S3::Utils::AlreadyExistsError => e
                 error("Preparing manifest failed because: #{e}")
               end
@@ -302,7 +302,7 @@ module Dpkg
         rows = archs.map do |arch|
           manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component,
                                                  arch, options[:cache_control],
-                                                 false, false)
+                                                 false, skip_upload: false)
           manifest.packages.map do |package|
             if options[:long]
               package.generate(options[:codename])
@@ -320,7 +320,8 @@ module Dpkg
           $stdout.puts rows.join("\n")
         else
           rows.each do |row|
-            $stdout.puts format("% -#{widths[0]}s  % -#{widths[1]}s  %<row>", row)
+            $stdout.puts format("% -#{widths[0]}<package>s  % -#{widths[1]}<version>s  %<arch>s",
+                                package: row[0], version: row[1], arch: row[2])
           end
         end
       end
@@ -402,12 +403,12 @@ module Dpkg
         from_manifest = Dpkg::S3::Manifest.retrieve(options[:codename],
                                                     component, arch,
                                                     options[:cache_control],
-                                                    false, options[:skip_package_upload])
+                                                    false, skip_upload: options[:skip_package_upload])
         to_release = Dpkg::S3::Release.retrieve(to_codename)
         to_manifest = Dpkg::S3::Manifest.retrieve(to_codename, to_component, arch,
                                                   options[:cache_control],
                                                   options[:fail_if_exists],
-                                                  options[:skip_package_upload])
+                                                  skip_upload: options[:skip_package_upload])
         packages = from_manifest.packages.select do |p|
           p.name == package_name &&
             (versions.nil? || versions.include?(p.full_version))
@@ -476,7 +477,7 @@ module Dpkg
         all_found = 0
         selected_arch.each do |ar|
           manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component, ar, options[:cache_control], false,
-                                                 options[:skip_package_upload])
+                                                 skip_upload: options[:skip_package_upload])
 
           deleted = manifest.delete_package(package, versions)
           all_found += deleted.length
@@ -528,7 +529,7 @@ module Dpkg
           log("Checking for missing packages in: #{options[:codename]}/#{options[:component]} #{arch}")
           manifest = Dpkg::S3::Manifest.retrieve(options[:codename], component,
                                                  arch, options[:cache_control], false,
-                                                 options[:skip_package_upload])
+                                                 skip_upload: options[:skip_package_upload])
           missing_packages = []
 
           manifest.packages.each do |p|

@@ -24,8 +24,9 @@ module Dpkg
           Dpkg::S3::Utils.s3_exists?(lock_path(codename, component, architecture, cache_control))
         end
 
-        def wait_for_lock(codename, component = nil, architecture = nil, cache_control = nil,
-                          max_attempts = 60, wait = 10)
+        def wait_for_lock(codename, component = nil, architecture = nil, cache_control = nil)
+          max_attempts = 60
+          wait = 10
           attempts = 0
           while locked?(codename, component, architecture, cache_control)
             attempts += 1

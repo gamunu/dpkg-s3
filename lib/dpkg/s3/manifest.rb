@@ -30,7 +30,7 @@ module Dpkg
       end
 
       class << self
-        def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_package_upload: false)
+        def retrieve(codename, component, architecture, cache_control, fail_if_exists, skip_upload: false)
           m = if (s = Dpkg::S3::Utils.s3_read("dists/#{codename}/#{component}/binary-#{architecture}/Packages"))
                 parse_packages(s)
               else
@@ -42,7 +42,7 @@ module Dpkg
           m.architecture = architecture
           m.cache_control = cache_control
           m.fail_if_exists = fail_if_exists
-          m.skip_package_upload = skip_package_upload
+          m.skip_package_upload = skip_upload
           m
         end
 
@@ -62,12 +62,12 @@ module Dpkg
           packages.each do |p|
             next unless p.name == pkg.name && \
                         p.full_version == pkg.full_version && \
-                        File.basename(p.url_filename(@codename)) != \
+                        File.basename(p.url_filename(@codename)) == \
                         File.basename(pkg.url_filename(@codename))
 
             raise AlreadyExistsError,
                   "package #{pkg.name}_#{pkg.full_version} already exists " \
-                  "with different filename (#{p.url_filename(@codename)})"
+                  "with filename (#{p.url_filename(@codename)})"
           end
         end
         if preserve_versions
@@ -108,7 +108,7 @@ module Dpkg
           @packages_to_be_upload.each do |pkg|
             yield pkg.url_filename(@codename) if block_given?
             s3_store(pkg.filename, pkg.url_filename(@codename), 'application/x-debian-package', cache_control,
-                     fail_if_exists)
+                     fail_if_exists: fail_if_exists)
           end
         end
 

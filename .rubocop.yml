@@ -2,6 +2,8 @@ require:
   - rubocop-rake
   - rubocop-minitest
 
+Style/ModuleFunction:
+  EnforcedStyle: extend_self
 Metrics/BlockLength:
   Enabled: false
 Metrics/MethodLength:
@@ -15,4 +17,4 @@ Metrics/AbcSize:
 Metrics/PerceivedComplexity:
   Enabled: false
 Metrics/ParameterLists:
-  Enabled: false
+  CountKeywordArgs: false

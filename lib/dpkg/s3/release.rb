@@ -100,28 +100,25 @@ module Dpkg
           key_param = Dpkg::S3::Utils.signing_key != '' ? "--default-key=#{Dpkg::S3::Utils.signing_key}" : ''
           gpg_clear = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -s --clearsign #{release_tmp.path}" # rubocop:disable Layout/LineLength
           gpg_sign = "gpg -a #{key_param} --digest-algo SHA256 #{Dpkg::S3::Utils.gpg_options} -b #{release_tmp.path}"
-          if system(gpg_clear) # rubocop:disable Style/GuardClause
-            local_file = "#{release_tmp.path}.asc"
-            remote_file = "dists/#{@codename}/InRelease"
-            yield remote_file if block_given?
-            raise 'Unable to locate InRelease file' unless File.exist?(local_file)
+          raise 'Signing the InRelease file failed.' unless system(gpg_clear)
 
-            s3_store(local_file, remote_file, 'application/pgp-signature; charset=us-ascii', cache_control)
-            File.unlink(local_file)
-          else
-            raise 'Signing the InRelease file failed.'
-          end
-          if system(gpg_sign) # rubocop:disable Style/GuardClause
-            local_file = "#{release_tmp.path}.asc"
-            remote_file = "#{filename}.gpg"
-            yield remote_file if block_given?
-            raise 'Unable to locate Release signature file' unless File.exist?(local_file)
+          local_file = "#{release_tmp.path}.asc"
+          remote_file = "dists/#{@codename}/InRelease"
+          yield remote_file if block_given?
+          raise 'Unable to locate InRelease file' unless File.exist?(local_file)
 
-            s3_store(local_file, remote_file, 'application/pgp-signature; charset=us-ascii', cache_control)
-            File.unlink(local_file)
-          else
-            raise 'Signing the Release file failed.'
-          end
+          s3_store(local_file, remote_file, 'application/pgp-signature; charset=us-ascii', cache_control)
+          File.unlink(local_file)
+
+          raise 'Signing the Release file failed.' unless system(gpg_sign)
+
+          local_file = "#{release_tmp.path}.asc"
+          remote_file = "#{filename}.gpg"
+          yield remote_file if block_given?
+          raise 'Unable to locate Release signature file' unless File.exist?(local_file)
+
+          s3_store(local_file, remote_file, 'application/pgp-signature; charset=us-ascii', cache_control)
+          File.unlink(local_file)
         else
           # remove an existing Release.gpg, if it was there
           s3_remove("#{filename}.gpg")
