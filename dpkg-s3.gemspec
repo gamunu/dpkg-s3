@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.version     = Dpkg::S3::VERSION
 
   gem.author      = 'Gamunu Balagalla'
-  gem.email       = 'gamunu.balagalla@outlook.com'
+  gem.email       = 'gamunu@fastcode.io'
   gem.homepage    = 'https://github.com/gamunu/dpkg-s3'
   gem.summary     = 'Easily create and manage an APT repository on S3.'
   gem.description = gem.summary
