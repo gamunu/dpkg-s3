@@ -20,7 +20,7 @@ jobs:
         version: [2.7.2, head]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: use-ruby ${{ matrix.version }}
       uses: ruby/setup-ruby@v1
       with:
