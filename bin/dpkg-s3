@@ -23,6 +23,8 @@ begin
 rescue StandardError => e
   warn "\n\tError during processing: #{e.message}\n\n".red
   warn "\n\tDebug: #{e.backtrace}\n\n".gray
+  exit(1)
 rescue Interrupt
   warn "\nOperation canceled. Please verify repository for broken packages".red
+  exit(130)
 end
