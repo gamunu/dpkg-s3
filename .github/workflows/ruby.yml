@@ -37,7 +37,7 @@ jobs:
     - name: Set up Ruby 2.7
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 4.0.6
     - run: bundle install
 
     - name: Publish to GPR
