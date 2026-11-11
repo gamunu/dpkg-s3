@@ -23,6 +23,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'thor',    '~> 1.1'
   gem.add_development_dependency 'minitest', '~> 5.14'
   gem.add_development_dependency 'rake', '~> 13'
-  gem.add_development_dependency 'rubocop-minitest', '~> 0.11.1'
+  gem.add_development_dependency 'rubocop-minitest', '~> 0.41.0'
   gem.add_development_dependency 'rubocop-rake', '~> 0.5.1'
 end
